@@ -11,7 +11,6 @@ from paste.deploy.converters import asbool
 from pylons import cache, session
 from pylons.controllers import WSGIController
 from pylons.controllers.util import abort as _abort
-from pylons.controllers.util import redirect_to, redirect
 from pylons.decorators import jsonify
 from pylons.i18n import N_, gettext, ngettext
 from pylons.templating import cached_template, pylons_globals
@@ -130,7 +129,7 @@ def render(template_name, extra_vars=None, cache_key=None, cache_type=None,
     if 'Pragma' in response.headers:
         del response.headers["Pragma"]
 
-    ## Caching Logic
+    # Caching Logic
     allow_cache = True
     # Force cache or not if explicit.
     if cache_force is not None:
@@ -147,7 +146,7 @@ def render(template_name, extra_vars=None, cache_key=None, cache_type=None,
     # Don't cache if we have set the __no_cache__ param in the query string.
     elif request.params.get('__no_cache__'):
         allow_cache = False
-   # Don't cache if we have extra vars containing data.
+    # Don't cache if we have extra vars containing data.
     elif extra_vars:
         for k, v in extra_vars.iteritems():
             allow_cache = False

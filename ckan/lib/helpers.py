@@ -26,8 +26,9 @@ import webhelpers.date as date
 from markdown import markdown
 from bleach import clean as clean_html
 from pylons import url as _pylons_default_url
-from ckan.common import config
-from routes import redirect_to as _redirect_to
+from ckan.common import config, is_flask_request
+from flask import redirect as _flask_redirect
+from routes import redirect_to as _routes_redirect_to
 from routes import url_for as _routes_default_url_for
 import i18n
 
@@ -140,7 +141,18 @@ def redirect_to(*args, **kw):
     '''
     if are_there_flash_messages():
         kw['__no_cache__'] = True
-    return _redirect_to(url_for(*args, **kw))
+
+    # Routes router doesn't like unicode args
+    uargs = map(lambda arg: str(arg) if isinstance(arg, unicode) else arg,
+                args)
+    _url = url_for(*uargs, **kw)
+    if _url.startswith('/'):
+        _url = str(config['ckan.site_url'].rstrip('/') + _url)
+
+    if is_flask_request():
+        return _flask_redirect(_url)
+    else:
+        return _routes_redirect_to(_url)
 
 
 @maintain.deprecated('h.url is deprecated please use h.url_for')
@@ -459,6 +471,7 @@ class _Flash(object):
 
     def are_there_messages(self):
         return bool(session.get(self.session_key))
+
 
 flash = _Flash()
 # this is here for backwards compatability
@@ -1019,6 +1032,7 @@ def linked_gravatar(email_hash, size=100, default=None):
         '%s</a>' % gravatar(email_hash, size, default)
     )
 
+
 _VALID_GRAVATAR_DEFAULTS = ['404', 'mm', 'identicon', 'monsterid',
                             'wavatar', 'retro']
 
@@ -1431,6 +1445,7 @@ def convert_to_dict(object_type, objs):
         items.append(item)
     return items
 
+
 # these are the types of objects that can be followed
 _follow_objects = ['dataset', 'user', 'group']
 
@@ -1640,7 +1655,7 @@ def groups_available(am_member=False):
 
 
 @core_helper
-def organizations_available(permission='edit_group'):
+def organizations_available(permission='manage_group'):
     '''Return a list of organizations that the current user has the specified
     permission for.
     '''
@@ -1758,6 +1773,7 @@ def get_request_param(parameter_name, default=None):
     from the request. This is useful for things like sort order in
     searches. '''
     return request.params.get(parameter_name, default)
+
 
 # find all inner text of html eg `<b>moo</b>` gets `moo` but not of <a> tags
 # as this would lead to linkifying links if they are urls.
@@ -2066,6 +2082,7 @@ def SI_number_span(number):
                          + '">')
     return output + formatters.localised_SI_number(number) + literal('</span>')
 
+
 # add some formatter functions
 localised_number = formatters.localised_number
 localised_SI_number = formatters.localised_SI_number
@@ -2165,6 +2182,7 @@ def get_site_statistics():
     stats['organization_count'] = len(
         logic.get_action('organization_list')({}, {}))
     return stats
+
 
 _RESOURCE_FORMATS = None
 
