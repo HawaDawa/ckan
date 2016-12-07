@@ -143,7 +143,8 @@ API.txt for details.
 	// desired timezone
 
 	function dateGenerator(ts, opts) {
-		if (opts.timezone == "browser") {
+opts.timezone = "browser";		
+if (opts.timezone == "browser") {
 			return new Date(ts);
 		} else if (!opts.timezone || opts.timezone == "utc") {
 			return makeUtcWrapper(new Date(ts));
